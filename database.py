@@ -233,17 +233,38 @@ class Database:
     # ------------------------------------------------------------------
     # Подзадачи
     # ------------------------------------------------------------------
-    def add_subtask(self, task_id: int, text: str) -> int:
+    def add_subtask(
+        self, task_id: int, text: str, is_done: bool = False
+    ) -> int:
+        """Добавляет пункт подзадач в конец списка задачи.
+
+        is_done нужен при сохранении окна задачи: список подзадач там
+        собирается в памяти вместе с отметками, и записывается в базу
+        целиком, уже с готовыми галочками.
+        """
         position = self._next_subtask_position(task_id)
         cursor = self._connection.execute(
             """
             INSERT INTO subtasks (task_id, text, is_done, position)
-            VALUES (?, ?, 0, ?)
+            VALUES (?, ?, ?, ?)
             """,
-            (task_id, text, position),
+            (task_id, text, int(is_done), position),
         )
         self._connection.commit()
         return cursor.lastrowid
+
+    def clear_subtasks(self, task_id: int) -> None:
+        """Удаляет все подзадачи задачи.
+
+        Используется при сохранении окна задачи: проще удалить старый
+        список пунктов и записать новый, чем вычислять, какие пункты
+        добавили, какие убрали и у каких изменилась галочка. Подзадач
+        у задачи единицы, поэтому цена такой перезаписи мизерная.
+        """
+        self._connection.execute(
+            "DELETE FROM subtasks WHERE task_id = ?", (task_id,)
+        )
+        self._connection.commit()
 
     def _next_subtask_position(self, task_id: int) -> int:
         """Следующий порядковый номер для нового пункта подзадач этой

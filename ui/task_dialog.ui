@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>480</width>
-    <height>620</height>
+    <height>700</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -128,7 +128,14 @@
     </widget>
    </item>
    <item>
-    <widget class="QListWidget" name="subtasksListWidget"/>
+    <widget class="QListWidget" name="subtasksListWidget">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>130</height>
+      </size>
+     </property>
+    </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="addSubtaskRowLayout">
@@ -161,14 +168,14 @@
       <widget class="QLabel" name="imagePreviewLabel">
        <property name="minimumSize">
         <size>
-         <width>64</width>
-         <height>64</height>
+         <width>120</width>
+         <height>120</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>64</width>
-         <height>64</height>
+         <width>120</width>
+         <height>120</height>
         </size>
        </property>
        <property name="text">

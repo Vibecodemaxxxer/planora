@@ -70,7 +70,7 @@
        <item>
         <widget class="QPushButton" name="newTaskButton">
          <property name="text">
-          <string>+ Новая задача</string>
+          <string>Новая задача</string>
          </property>
         </widget>
        </item>
@@ -135,7 +135,7 @@
       <widget class="QWidget" name="calendarPage">
        <layout class="QHBoxLayout" name="calendarPageLayout">
         <item>
-         <widget class="QCalendarWidget" name="calendarWidget"/>
+         <widget class="TaskCalendar" name="calendarWidget"/>
         </item>
         <item>
          <layout class="QVBoxLayout" name="calendarDayLayout">
@@ -179,6 +179,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>TaskCalendar</class>
+   <extends>QCalendarWidget</extends>
+   <header>task_calendar</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

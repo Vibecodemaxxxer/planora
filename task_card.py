@@ -21,7 +21,8 @@ task_card.py
 выполняется: три окна приложения сделаны именно в Designer.
 """
 
-from PyQt5.QtCore import QDate, pyqtSignal
+from PyQt5.QtCore import QDate, QPoint, Qt, pyqtSignal
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QCheckBox,
     QFrame,
@@ -38,7 +39,9 @@ from constants import (
     CARD_MARGIN,
     CARD_MIN_HEIGHT,
     CARD_PROGRESS_HEIGHT,
+    CARD_PROGRESS_WIDTH,
     CARD_SPACING,
+    CARD_THUMBNAIL_SIZE,
     CARD_TOOLTIP_TEMPLATE,
     CATEGORY_COLOR_DEFAULT,
     DATE_FORMAT_DB,
@@ -100,11 +103,18 @@ class TaskCard(QWidget):
     можно вставить в любой список, не переписывая её логику.
     """
 
-    # Собственный сигнал виджета. Объявляется на уровне класса и
-    # описывает типы своих аргументов: id задачи и новое состояние
-    # галочки. Главное окно подключается к нему так же, как к штатным
-    # сигналам Qt: card.doneToggled.connect(...).
+    # Собственные сигналы виджета. Объявляются на уровне класса, в
+    # скобках — типы аргументов. Главное окно подключается к ним так же,
+    # как к штатным сигналам Qt: card.doneToggled.connect(...).
+    #
+    # doneToggled   — нажали галочку: (id задачи, новое состояние).
+    # openRequested — задачу просят открыть на редактирование: (id).
+    # clicked       — по карточке щёлкнули левой кнопкой: (id).
+    # menuRequested — правый клик: (id, точка на экране для меню).
     doneToggled = pyqtSignal(int, bool)
+    openRequested = pyqtSignal(int)
+    clicked = pyqtSignal(int)
+    menuRequested = pyqtSignal(int, QPoint)
 
     def __init__(
         self, task, category, subtasks_done, subtasks_total, parent=None
@@ -133,9 +143,20 @@ class TaskCard(QWidget):
         layout.setSpacing(CARD_SPACING)
 
         layout.addWidget(self._create_color_bar(category))
+
+        # Второй аргумент — коэффициент растяжения. Единица означает
+        # "эта часть забирает всё свободное место по ширине", поэтому
+        # метки срока и приоритета уезжают вправо, а галочка встаёт
+        # у правого края карточки.
         layout.addLayout(
-            self._create_content(task, subtasks_done, subtasks_total)
+            self._create_content(task, subtasks_done, subtasks_total), 1
         )
+
+        # Миниатюра появляется только у задач с прикреплённой картинкой.
+        thumbnail = self._create_thumbnail(task)
+        if thumbnail is not None:
+            layout.addWidget(thumbnail)
+
         layout.addWidget(self._create_done_checkbox(task))
 
     @property
@@ -177,8 +198,11 @@ class TaskCard(QWidget):
         # Полоску прогресса добавляем только если у задачи есть
         # подзадачи: у задачи без них прогресс показывать нечем.
         if subtasks_total:
+            # Выравнивание влево: без него полоска растянулась бы
+            # на всю ширину карточки и перетягивала бы внимание.
             content_layout.addWidget(
-                self._create_progress_bar(subtasks_done, subtasks_total)
+                self._create_progress_bar(subtasks_done, subtasks_total),
+                alignment=Qt.AlignLeft,
             )
 
         return content_layout
@@ -251,7 +275,42 @@ class TaskCard(QWidget):
             SUBTASKS_PROGRESS_TEMPLATE.format(subtasks_done, subtasks_total)
         )
         progress_bar.setFixedHeight(CARD_PROGRESS_HEIGHT)
+        progress_bar.setFixedWidth(CARD_PROGRESS_WIDTH)
         return progress_bar
+
+    @staticmethod
+    def _create_thumbnail(task):
+        """Маленькое превью прикреплённой картинки или None.
+
+        Возвращает None в двух случаях: картинки у задачи нет или файл
+        не читается (его могли удалить или переименовать — в базе лежит
+        только путь). Тогда карточка просто обходится без миниатюры.
+        """
+        if not task["image_path"]:
+            return None
+
+        pixmap = QPixmap(task["image_path"])
+        if pixmap.isNull():
+            return None
+
+        thumbnail = QLabel()
+        thumbnail.setObjectName("taskThumbnailLabel")
+        thumbnail.setFixedSize(CARD_THUMBNAIL_SIZE, CARD_THUMBNAIL_SIZE)
+        thumbnail.setAlignment(Qt.AlignCenter)
+        thumbnail.setToolTip(task["image_path"])
+
+        # KeepAspectRatioByExpanding заполняет квадрат целиком, обрезая
+        # лишнее по длинной стороне: так миниатюры выглядят одинаково
+        # ровно и у горизонтальных, и у вертикальных картинок.
+        thumbnail.setPixmap(
+            pixmap.scaled(
+                CARD_THUMBNAIL_SIZE,
+                CARD_THUMBNAIL_SIZE,
+                Qt.KeepAspectRatioByExpanding,
+                Qt.SmoothTransformation,
+            )
+        )
+        return thumbnail
 
     def _create_done_checkbox(self, task) -> QCheckBox:
         """Галочка "выполнено" в правой части карточки."""
@@ -268,8 +327,44 @@ class TaskCard(QWidget):
         return done_checkbox
 
     # ------------------------------------------------------------------
-    # Обработка нажатия галочки
+    # Мышь и обработка нажатия галочки
     # ------------------------------------------------------------------
     def _on_done_toggled(self, is_checked: bool) -> None:
         """Пересылает нажатие галочки наружу вместе с id задачи."""
         self.doneToggled.emit(self._task_id, is_checked)
+
+    def mousePressEvent(self, event) -> None:
+        """Одиночный клик по карточке — сообщить, что её выбрали.
+
+        Карточка закрывает собой пункт списка, поэтому сам QListWidget
+        щелчка не видит и выделение не переносится. Главное окно по этому
+        сигналу выделяет нужный пункт — и тогда работают Delete и Enter.
+        """
+        self.clicked.emit(self._task_id)
+        super().mousePressEvent(event)
+
+    def contextMenuEvent(self, event) -> None:
+        """Правый клик по карточке — попросить показать меню.
+
+        Qt вызывает этот метод при правом щелчке (или нажатии клавиши
+        вызова меню). Само меню собирает главное окно: там есть доступ
+        к базе и к окну задачи. globalPos — точка в координатах экрана,
+        именно она нужна меню, чтобы появиться под курсором.
+        """
+        self.menuRequested.emit(self._task_id, event.globalPos())
+
+    def mouseDoubleClickEvent(self, event) -> None:
+        """Двойной клик по карточке — открыть задачу на редактирование.
+
+        Это переопределение обработчика события: Qt вызывает метод с
+        таким именем у виджета, когда по нему дважды щёлкнули мышью.
+        В отличие от сигнала, событие приходит виджету само, подключать
+        ничего не нужно — достаточно определить метод с нужным именем.
+        Сама карточка окно не открывает, а только сообщает о просьбе
+        сигналом; открывает главное окно.
+        """
+        self.openRequested.emit(self._task_id)
+
+        # Вызов метода базового класса — хорошая привычка: так остальная
+        # штатная обработка события не теряется.
+        super().mouseDoubleClickEvent(event)

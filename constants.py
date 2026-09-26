@@ -7,24 +7,56 @@ constants.py
 """
 
 import os
+import sys
 
 # ---------------------------------------------------------------------------
 # Пути к файлам проекта.
 # BASE_DIR вычисляется от расположения этого файла, а не от текущей рабочей
-# директории — иначе после сборки в .exe пути могут "поехать" в зависимости
-# от того, откуда пользователь запустил программу.
+# директории — иначе пути "поедут" в зависимости от того, откуда пользователь
+# запустил программу.
 # ---------------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DB_PATH = os.path.join(BASE_DIR, "planora.db")
+# После сборки PyInstaller-ом программа работает иначе, и каталогов нужно
+# два. Признак запуска из .exe — атрибут sys.frozen.
+#
+#   RESOURCES_DIR — формы, стили и иконки. В .exe они упакованы внутрь и при
+#       запуске распаковываются во временную папку, путь к ней лежит
+#       в sys._MEIPASS.
+#   DATA_DIR — файл базы данных. Его нельзя класть во временную папку: она
+#       удаляется при выходе, и все задачи пропали бы. Поэтому база лежит
+#       рядом с самим .exe (sys.executable — путь к запущенной программе).
+#
+# При обычном запуске из исходников оба каталога — это папка проекта.
+if getattr(sys, "frozen", False):
+    RESOURCES_DIR = sys._MEIPASS
+    DATA_DIR = os.path.dirname(sys.executable)
+else:
+    RESOURCES_DIR = BASE_DIR
+    DATA_DIR = BASE_DIR
 
-UI_DIR = os.path.join(BASE_DIR, "ui")
+DB_PATH = os.path.join(DATA_DIR, "planora.db")
+
+UI_DIR = os.path.join(RESOURCES_DIR, "ui")
 MAIN_WINDOW_UI = os.path.join(UI_DIR, "main_window.ui")
 TASK_DIALOG_UI = os.path.join(UI_DIR, "task_dialog.ui")
 CATEGORIES_DIALOG_UI = os.path.join(UI_DIR, "categories_dialog.ui")
 
-ICONS_DIR = os.path.join(BASE_DIR, "assets", "icons")
-STYLE_PATH = os.path.join(BASE_DIR, "styles", "style.qss")
+ICONS_DIR = os.path.join(RESOURCES_DIR, "assets", "icons")
+STYLE_PATH = os.path.join(RESOURCES_DIR, "styles", "style.qss")
+
+# Иконки интерфейса. Если файла не окажется на месте, QIcon просто будет
+# пустым и кнопка останется с одним текстом — падения не будет.
+ICON_NEW_TASK = os.path.join(ICONS_DIR, "new_task.png")
+ICON_CALENDAR = os.path.join(ICONS_DIR, "calendar.png")
+ICON_LIST = os.path.join(ICONS_DIR, "list.png")
+ICON_CATEGORIES = os.path.join(ICONS_DIR, "categories.png")
+ICON_SEARCH = os.path.join(ICONS_DIR, "search.png")
+ICON_IMAGE = os.path.join(ICONS_DIR, "image.png")
+ICON_TRASH = os.path.join(ICONS_DIR, "trash.png")
+
+# Размер, до которого иконки уменьшаются на кнопках (файлы 24x24).
+ICON_SIZE = 18
 
 # ---------------------------------------------------------------------------
 # Название приложения.
@@ -119,6 +151,24 @@ EMPTY_DAY_TASKS_TEXT = "На этот день задач нет"
 EMPTY_ALL_TASKS_TEXT = "Задач пока нет"
 
 # ---------------------------------------------------------------------------
+# Цвета календаря. QSS до внутренностей QCalendarWidget достаёт не везде,
+# поэтому часть цветов задаётся кодом (см. MainWindow._prepare_calendar).
+# ---------------------------------------------------------------------------
+CALENDAR_TEXT_COLOR = "#3f3f46"       # обычные дни
+CALENDAR_HEADER_COLOR = "#a1a1aa"     # названия дней недели и выходные
+CALENDAR_SELECTION_COLOR = "#18181b"  # выбранный день
+CALENDAR_DAY_BG = "#ffffff"           # фон сетки дней
+CALENDAR_TODAY_BG = "#f4f4f5"         # подсветка сегодняшнего дня
+CALENDAR_OTHER_MONTH_COLOR = "#d4d4d8"  # дни соседних месяцев
+
+# Скругление подложки под днём и точка-отметка о дедлайне.
+CALENDAR_CELL_RADIUS = 8
+CALENDAR_CELL_MARGIN = 3
+CALENDAR_DOT_SIZE = 5
+CALENDAR_DOT_COLOR = "#18181b"          # есть задачи на этот день
+CALENDAR_DOT_OVERDUE_COLOR = "#ef4444"  # среди них есть просроченные
+
+# ---------------------------------------------------------------------------
 # Карточка задачи в списке.
 # ---------------------------------------------------------------------------
 # Ширина цветной полоски категории слева и её скругление.
@@ -130,14 +180,110 @@ CARD_MIN_HEIGHT = 64
 CARD_MARGIN = 10
 CARD_SPACING = 10
 
-# Высота полоски прогресса подзадач.
+# Размеры полоски прогресса подзадач.
 CARD_PROGRESS_HEIGHT = 14
+CARD_PROGRESS_WIDTH = 220
 
 # Цвет полоски и подпись для задачи без категории.
 CATEGORY_COLOR_DEFAULT = "#d4d4d8"
 NO_CATEGORY_TEXT = "Без категории"
 
+# Размер миниатюры прикреплённой картинки на карточке.
+CARD_THUMBNAIL_SIZE = 38
+
 # Подпись на полоске прогресса и всплывающая подсказка карточки.
 SUBTASKS_PROGRESS_TEMPLATE = "{} из {}"
 CARD_TOOLTIP_TEMPLATE = "Категория: {}"
 DONE_CHECKBOX_TOOLTIP = "Отметить выполненной"
+
+# ---------------------------------------------------------------------------
+# Окно задачи (task_dialog.py).
+# ---------------------------------------------------------------------------
+TASK_DIALOG_TITLE_NEW = "Новая задача"
+TASK_DIALOG_TITLE_EDIT = "Редактирование задачи"
+
+# QDateEdit не умеет быть пустым, поэтому роль "срок не задан" играет
+# минимально допустимая дата: при ней поле показывает текст DEADLINE_NO_DATE
+# вместо самой даты (свойство specialValueText).
+NO_DEADLINE_DATE = "2000-01-01"
+
+# Диалог выбора картинки.
+IMAGE_DIALOG_TITLE = "Выберите картинку"
+IMAGE_FILE_FILTER = (
+    "Изображения (*.png *.jpg *.jpeg *.bmp *.gif);;Все файлы (*)"
+)
+
+# Текст в превью, когда картинка не прикреплена, и подсказки.
+NO_IMAGE_TEXT = "нет\nфото"
+SUBTASKS_LIST_TOOLTIP = (
+    "Галочка — пункт выполнен. Delete — удалить выделенный пункт."
+)
+
+# ---------------------------------------------------------------------------
+# Тексты стандартных диалогов (QMessageBox).
+# ---------------------------------------------------------------------------
+WARNING_NO_TITLE_HEADER = "Не хватает данных"
+WARNING_NO_TITLE_TEXT = "У задачи должно быть название."
+
+WARNING_BAD_IMAGE_HEADER = "Картинка не открылась"
+WARNING_BAD_IMAGE_TEXT = (
+    "Не удалось прочитать файл:\n{}\n\nВыберите другую картинку."
+)
+
+CONFIRM_DELETE_TASK_HEADER = "Удаление задачи"
+CONFIRM_DELETE_TASK_TEXT = (
+    "Удалить задачу «{}»?\nОтменить это будет нельзя."
+)
+
+# ---------------------------------------------------------------------------
+# Окно категорий (categories_dialog.py).
+# ---------------------------------------------------------------------------
+# Размер цветного кружка рядом с названием категории в списке.
+CATEGORY_CIRCLE_SIZE = 14
+
+# Цвет, предложенный для новой категории (нейтральный серый zinc-400).
+NEW_CATEGORY_COLOR = "#a1a1aa"
+
+# Диалоги ввода названия категории (QInputDialog).
+INPUT_NEW_CATEGORY_HEADER = "Новая категория"
+INPUT_NEW_CATEGORY_LABEL = "Название категории:"
+INPUT_RENAME_CATEGORY_HEADER = "Переименование категории"
+INPUT_RENAME_CATEGORY_LABEL = "Новое название:"
+
+# Диалог выбора цвета (QColorDialog).
+COLOR_DIALOG_TITLE = "Цвет категории"
+
+# Предупреждения и подтверждения окна категорий.
+WARNING_CATEGORY_EXISTS_HEADER = "Название занято"
+WARNING_CATEGORY_EXISTS_TEXT = "Категория «{}» уже есть в списке."
+
+WARNING_CATEGORY_HAS_TASKS_HEADER = "Категорию нельзя удалить"
+WARNING_CATEGORY_HAS_TASKS_TEXT = (
+    "В категории «{}» есть задачи.\n"
+    "Сначала перенесите их в другую категорию или удалите."
+)
+
+CONFIRM_DELETE_CATEGORY_HEADER = "Удаление категории"
+CONFIRM_DELETE_CATEGORY_TEXT = "Удалить категорию «{}»?"
+
+# ---------------------------------------------------------------------------
+# Горячие клавиши.
+# ---------------------------------------------------------------------------
+SHORTCUT_NEW_TASK = "Ctrl+N"
+SHORTCUT_SEARCH = "Ctrl+F"
+SHORTCUT_MODE_CALENDAR = "Ctrl+1"
+SHORTCUT_MODE_ALL_TASKS = "Ctrl+2"
+
+# ---------------------------------------------------------------------------
+# Контекстное меню карточки задачи (правый клик).
+# ---------------------------------------------------------------------------
+MENU_OPEN_TASK = "Открыть"
+MENU_TASK_DONE = "Выполнено"
+MENU_DELETE_TASK = "Удалить"
+
+# ---------------------------------------------------------------------------
+# Окно просмотра картинки задачи (двойной клик по превью).
+# ---------------------------------------------------------------------------
+IMAGE_VIEWER_TITLE = "Картинка задачи"
+IMAGE_VIEWER_MAX_SIZE = 800
+

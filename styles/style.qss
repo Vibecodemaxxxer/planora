@@ -1,0 +1,416 @@
+/* ==========================================================================
+   Planora — оформление интерфейса (QSS).
+
+   QSS — это "CSS для Qt": правила вида "виджет { свойство: значение; }".
+   Файл целиком применяется к приложению в main.py, поэтому правила
+   действуют сразу во всех окнах и диалогах.
+
+   Обращаться к виджету можно тремя способами:
+     QPushButton      — ко всем кнопкам (по классу);
+     #newTaskButton   — к одному виджету по его objectName из Qt Designer;
+     QPushButton:hover — к состоянию (наведение, нажатие, фокус).
+
+   Палитра — нейтральный серый zinc, один акцентный цвет (почти чёрный):
+     #ffffff  фон полей и списков
+     #fafafa  фон окна и боковой панели
+     #f4f4f5  наведение, фон полоски прогресса
+     #e4e4e7  рамки
+     #d4d4d8  рамки полей, заполнение прогресса
+     #71717a  второстепенный текст
+     #3f3f46  основной текст
+     #18181b  акцент: главная кнопка, выделение, фокус
+   ========================================================================== */
+
+/* --- Окна ---------------------------------------------------------------- */
+QMainWindow,
+QDialog {
+    background-color: #fafafa;
+}
+
+/* --- Текст --------------------------------------------------------------- */
+QLabel {
+    color: #3f3f46;
+    font-size: 13px;
+}
+
+/* Подписи над полями в окне задачи — мельче и светлее основного текста. */
+#titleFieldLabel,
+#descriptionFieldLabel,
+#deadlineFieldLabel,
+#priorityFieldLabel,
+#categoryFieldLabel,
+#subtasksFieldLabel {
+    color: #71717a;
+    font-size: 12px;
+}
+
+#appTitleLabel {
+    color: #18181b;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 4px 2px 8px 2px;
+}
+
+#selectedDayLabel,
+#categoriesTitleLabel {
+    color: #18181b;
+    font-size: 14px;
+    font-weight: bold;
+    padding-bottom: 2px;
+}
+
+/* --- Боковая панель ------------------------------------------------------ */
+#sidebarWidget {
+    background-color: #fafafa;
+    border-right: 1px solid #e4e4e7;
+}
+
+/* Разделительные линии (класс Line в Qt Designer — это QFrame). */
+QFrame[frameShape="4"],
+QFrame[frameShape="5"] {
+    color: #e4e4e7;
+}
+
+/* --- Кнопки ------------------------------------------------------------- */
+QPushButton {
+    background-color: #ffffff;
+    color: #3f3f46;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    min-height: 18px;
+}
+
+QPushButton:hover {
+    background-color: #f4f4f5;
+    border-color: #d4d4d8;
+}
+
+QPushButton:pressed {
+    background-color: #e4e4e7;
+}
+
+QPushButton:disabled {
+    color: #a1a1aa;
+    background-color: #fafafa;
+}
+
+/* Главная кнопка действия — акцентная. */
+#newTaskButton,
+#saveButton {
+    background-color: #18181b;
+    color: #ffffff;
+    border: 1px solid #18181b;
+    font-weight: bold;
+}
+
+#newTaskButton:hover,
+#saveButton:hover {
+    background-color: #27272a;
+    border-color: #27272a;
+}
+
+#newTaskButton:pressed,
+#saveButton:pressed {
+    background-color: #3f3f46;
+}
+
+/* Кнопки-переключатели режимов: без рамки, активная — с серой заливкой. */
+#calendarModeButton,
+#allTasksModeButton {
+    background-color: transparent;
+    border: none;
+    color: #52525b;
+    text-align: left;
+    padding: 9px 12px;
+}
+
+#calendarModeButton:hover,
+#allTasksModeButton:hover {
+    background-color: #f4f4f5;
+    color: #18181b;
+}
+
+#calendarModeButton:checked,
+#allTasksModeButton:checked {
+    background-color: #f4f4f5;
+    color: #18181b;
+    font-weight: bold;
+}
+
+/* Удаление — опасное действие, поэтому текст красный. */
+#deleteButton,
+#deleteCategoryButton {
+    color: #dc2626;
+}
+
+#deleteButton:hover,
+#deleteCategoryButton:hover {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+/* --- Поля ввода --------------------------------------------------------- */
+QLineEdit,
+QTextEdit,
+QComboBox,
+QDateEdit {
+    background-color: #ffffff;
+    color: #3f3f46;
+    border: 1px solid #d4d4d8;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    selection-background-color: #18181b;
+    selection-color: #ffffff;
+}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QComboBox:focus,
+QDateEdit:focus {
+    border-color: #18181b;
+}
+
+QLineEdit:hover,
+QComboBox:hover,
+QDateEdit:hover {
+    border-color: #a1a1aa;
+}
+
+/* Кнопка со стрелкой у выпадающих списков и поля даты.
+   Саму стрелку не перерисовываем: своей иконки в проекте нет, а
+   нарисованная рамками получается похожей на букву "L". Системная
+   стрелка выглядит привычно и ничего не ломает. */
+QComboBox::drop-down,
+QDateEdit::drop-down {
+    border: none;
+    width: 20px;
+}
+
+/* Полю даты нужна минимальная ширина: иначе дата обрезается
+   выпадающей кнопкой. */
+QDateEdit {
+    min-width: 110px;
+}
+
+/* Раскрытый список вариантов. */
+QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+    selection-background-color: #f4f4f5;
+    selection-color: #18181b;
+}
+
+/* --- Списки ------------------------------------------------------------- */
+QListWidget {
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 6px;
+    outline: none;           /* убирает пунктирную рамку вокруг пункта */
+}
+
+QListWidget::item {
+    border-radius: 8px;
+    padding: 2px;
+    color: #3f3f46;
+}
+
+QListWidget::item:hover {
+    background-color: #fafafa;
+}
+
+/* Выделение — светло-серое, а не системное синее: карточка задачи
+   прозрачная, поэтому этот фон виден сквозь неё. */
+QListWidget::item:selected {
+    background-color: #f4f4f5;
+    color: #18181b;
+    border: 1px solid #e4e4e7;
+}
+
+/* Список подзадач и список категорий — пункты пониже. */
+#subtasksListWidget::item,
+#categoriesListWidget::item {
+    padding: 5px 4px;
+}
+
+/* --- Карточка задачи ---------------------------------------------------- */
+/* Фон карточке не задаём: она должна оставаться прозрачной, чтобы через
+   неё было видно выделение пункта списка. Цвета полоски категории, метки
+   срока и приоритета приходят из кода — они зависят от данных. */
+#taskTitleLabel {
+    color: #18181b;
+    font-size: 13px;
+}
+
+#deadlineLabel,
+#priorityLabel {
+    font-size: 12px;
+}
+
+/* Миниатюра прикреплённой картинки на карточке. */
+#taskThumbnailLabel {
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+}
+
+/* Превью картинки в окне задачи: рамка нужна, чтобы пустое место
+   читалось как "сюда можно прикрепить файл". */
+#imagePreviewLabel {
+    background-color: #ffffff;
+    border: 1px dashed #d4d4d8;
+    border-radius: 8px;
+    color: #a1a1aa;
+    font-size: 11px;
+}
+
+/* --- Полоска прогресса подзадач ---------------------------------------- */
+QProgressBar {
+    background-color: #f4f4f5;
+    border: none;
+    border-radius: 7px;
+    color: #52525b;
+    font-size: 11px;
+    text-align: center;
+}
+
+/* Заполненная часть намеренно светлая: поверх неё идёт подпись
+   "2 из 5", и на тёмной заливке её было бы не прочитать. */
+QProgressBar::chunk {
+    background-color: #d4d4d8;
+    border-radius: 7px;
+}
+
+/* --- Календарь ---------------------------------------------------------- */
+QCalendarWidget {
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+}
+
+/* Верхняя панель календаря со стрелками и названием месяца.
+   qt_calendar_navigationbar — служебное имя, которое Qt даёт этой панели
+   внутри QCalendarWidget; других способов до неё дотянуться нет. */
+QCalendarWidget QWidget#qt_calendar_navigationbar {
+    background-color: #fafafa;
+    border-bottom: 1px solid #e4e4e7;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+QCalendarWidget QToolButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #18181b;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 6px 10px;
+}
+
+QCalendarWidget QToolButton:hover {
+    background-color: #f4f4f5;
+}
+
+/* Сетка дней. selection-background-color — цвет выбранного дня. */
+QCalendarWidget QAbstractItemView:enabled {
+    background-color: #ffffff;
+    color: #3f3f46;
+    outline: none;
+    selection-background-color: #18181b;
+    selection-color: #ffffff;
+}
+
+/* Дни соседних месяцев — бледные. */
+QCalendarWidget QAbstractItemView:disabled {
+    color: #d4d4d8;
+}
+
+/* --- Контекстное меню --------------------------------------------------- */
+QMenu {
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QMenu::item {
+    border-radius: 6px;
+    padding: 7px 24px 7px 12px;
+    color: #3f3f46;
+    font-size: 13px;
+}
+
+QMenu::item:selected {
+    background-color: #f4f4f5;
+    color: #18181b;
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: #e4e4e7;
+    margin: 4px 8px;
+}
+
+/* --- Полосы прокрутки --------------------------------------------------- */
+QScrollBar:vertical {
+    background-color: transparent;
+    width: 10px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #d4d4d8;
+    border-radius: 5px;
+    min-height: 28px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #a1a1aa;
+}
+
+/* Кнопки-стрелки на концах полосы убираем — они не нужны. */
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background-color: transparent;
+}
+
+QScrollBar:horizontal {
+    background-color: transparent;
+    height: 10px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #d4d4d8;
+    border-radius: 5px;
+    min-width: 28px;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background-color: transparent;
+}
+
+/* --- Стандартные диалоги ------------------------------------------------ */
+/* Кнопкам QMessageBox нужна минимальная ширина, иначе "Да" и "Нет"
+   получаются узкими полосками. */
+QMessageBox QPushButton,
+QInputDialog QPushButton {
+    min-width: 76px;
+}

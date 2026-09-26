@@ -12,6 +12,7 @@ main.py
 import os
 import sys
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
 
 from constants import APP_NAME, STYLE_PATH
@@ -35,6 +36,12 @@ def load_stylesheet(path: str) -> str:
 
 def main() -> None:
     """Собирает приложение и запускает цикл обработки событий."""
+    # Убираем кнопку "?" в заголовке диалоговых окон. Qt добавляет её на
+    # Windows по умолчанию: это старый механизм подсказок "Что это?", а
+    # подсказки у нас обычные, всплывающие при наведении. Атрибут нужно
+    # задать до создания QApplication — он влияет на то, как создаются окна.
+    QApplication.setAttribute(Qt.AA_DisableWindowContextHelpButton, True)
+
     # QApplication — обязательный объект любого Qt-приложения: он
     # обрабатывает события (клики, нажатия клавиш, перерисовку) и должен
     # быть создан раньше любых виджетов.
