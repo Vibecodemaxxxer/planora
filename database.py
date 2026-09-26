@@ -11,7 +11,7 @@ UI-код не зависит от деталей хранения данных,
 
 import sqlite3
 from datetime import date
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional, Tuple
 
 from constants import DB_PATH, DEFAULT_CATEGORIES
 
@@ -263,6 +263,25 @@ class Database:
             (task_id,),
         )
         return cursor.fetchall()
+
+    def count_subtasks(self, task_id: int) -> Tuple[int, int]:
+        """Возвращает пару (выполнено, всего) подзадач задачи.
+
+        Нужна для полоски прогресса на карточке ("2 из 5"). Считаем
+        одним SQL-запросом, а не загрузкой всех подзадач в Python:
+        карточек в списке много, и каждая лишняя строка из БД — лишняя
+        работа. COALESCE подставляет 0 вместо NULL, который SUM
+        возвращает, когда подзадач нет вообще.
+        """
+        cursor = self._connection.execute(
+            """
+            SELECT COALESCE(SUM(is_done), 0), COUNT(*)
+            FROM subtasks WHERE task_id = ?
+            """,
+            (task_id,),
+        )
+        done, total = cursor.fetchone()
+        return done, total
 
     def set_subtask_done(self, subtask_id: int, is_done: bool) -> None:
         self._connection.execute(

@@ -17,3 +17,7 @@ dist/
 # IDE
 .vscode/
 .idea/
+
+# Рабочие заметки, не часть проекта
+claude.md
+CLAUDE.md
