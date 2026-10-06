@@ -19,10 +19,11 @@ from PyQt5.QtWidgets import (
     QDialog,
     QInputDialog,
     QListWidgetItem,
-    QMessageBox,
 )
 
 from constants import (
+    BUTTON_CANCEL,
+    BUTTON_OK,
     CATEGORIES_DIALOG_UI,
     CATEGORY_CIRCLE_SIZE,
     COLOR_DIALOG_TITLE,
@@ -42,6 +43,7 @@ from constants import (
     WARNING_CATEGORY_HAS_TASKS_TEXT,
 )
 from database import Database
+from dialogs import ask_yes_no, show_warning
 
 
 def make_color_icon(color_name: str) -> QIcon:
@@ -209,21 +211,19 @@ class CategoriesDialog(QDialog):
         # По ТЗ категорию с задачами удалять нельзя: задачи остались бы
         # без категории, и пользователь этого не ожидает.
         if self._db.category_has_tasks(category["id"]):
-            QMessageBox.warning(
+            show_warning(
                 self,
                 WARNING_CATEGORY_HAS_TASKS_HEADER,
                 WARNING_CATEGORY_HAS_TASKS_TEXT.format(category["name"]),
             )
             return
 
-        answer = QMessageBox.question(
+        is_confirmed = ask_yes_no(
             self,
             CONFIRM_DELETE_CATEGORY_HEADER,
             CONFIRM_DELETE_CATEGORY_TEXT.format(category["name"]),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
         )
-        if answer != QMessageBox.Yes:
+        if not is_confirmed:
             return
 
         self._db.delete_category(category["id"])
@@ -236,15 +236,24 @@ class CategoriesDialog(QDialog):
         """Спрашивает название категории через QInputDialog.
 
         Возвращает введённое название без лишних пробелов или None,
-        если пользователь нажал «Отмена». Второе значение, которое
-        возвращает getText, — признак нажатия «ОК».
+        если пользователь отказался.
+
+        Готовый вызов QInputDialog.getText(...) короче, но у него кнопки
+        подписаны по-английски ("OK", "Cancel"). Поэтому создаём диалог
+        сам и задаём надписи своими методами.
         """
-        name, is_accepted = QInputDialog.getText(
-            self, header, label, text=current_name
-        )
-        if not is_accepted:
+        dialog = QInputDialog(self)
+        dialog.setWindowTitle(header)
+        dialog.setLabelText(label)
+        dialog.setTextValue(current_name)
+        dialog.setOkButtonText(BUTTON_OK)
+        dialog.setCancelButtonText(BUTTON_CANCEL)
+
+        # exec_() возвращает результат: Accepted — нажали "ОК".
+        if dialog.exec_() != QDialog.Accepted:
             return None
-        return name.strip()
+
+        return dialog.textValue().strip()
 
     def _ask_color(self, current_color):
         """Спрашивает цвет через стандартный QColorDialog.
@@ -267,7 +276,7 @@ class CategoriesDialog(QDialog):
 
     def _warn_name_taken(self, name: str) -> None:
         """Сообщает, что категория с таким названием уже есть."""
-        QMessageBox.warning(
+        show_warning(
             self,
             WARNING_CATEGORY_EXISTS_HEADER,
             WARNING_CATEGORY_EXISTS_TEXT.format(name),

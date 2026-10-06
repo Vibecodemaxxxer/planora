@@ -26,7 +26,6 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QLabel,
     QListWidgetItem,
-    QMessageBox,
     QShortcut,
     QVBoxLayout,
 )
@@ -60,6 +59,7 @@ from constants import (
     WARNING_NO_TITLE_TEXT,
 )
 from database import Database
+from dialogs import ask_yes_no, show_warning
 
 
 class TaskDialog(QDialog):
@@ -319,7 +319,7 @@ class TaskDialog(QDialog):
 
         if pixmap.isNull():
             # Файл не картинка или не читается.
-            QMessageBox.warning(
+            show_warning(
                 self,
                 WARNING_BAD_IMAGE_HEADER,
                 WARNING_BAD_IMAGE_TEXT.format(self._image_path),
@@ -394,7 +394,7 @@ class TaskDialog(QDialog):
         """Проверяет поля и записывает задачу в базу."""
         title = self.titleLineEdit.text().strip()
         if not title:
-            QMessageBox.warning(
+            show_warning(
                 self, WARNING_NO_TITLE_HEADER, WARNING_NO_TITLE_TEXT
             )
             self.titleLineEdit.setFocus()
@@ -444,16 +444,12 @@ class TaskDialog(QDialog):
 
     def _delete_task(self) -> None:
         """Удаляет задачу после подтверждения."""
-        answer = QMessageBox.question(
+        is_confirmed = ask_yes_no(
             self,
             CONFIRM_DELETE_TASK_HEADER,
             CONFIRM_DELETE_TASK_TEXT.format(self.titleLineEdit.text()),
-            QMessageBox.Yes | QMessageBox.No,
-            # Кнопка по умолчанию — "Нет": случайное нажатие Enter
-            # не должно удалять задачу.
-            QMessageBox.No,
         )
-        if answer != QMessageBox.Yes:
+        if not is_confirmed:
             return
 
         # Подзадачи удалятся сами — ON DELETE CASCADE в схеме БД.

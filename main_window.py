@@ -20,7 +20,6 @@ from PyQt5.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QMenu,
-    QMessageBox,
     QShortcut,
 )
 
@@ -57,6 +56,7 @@ from constants import (
     SHORTCUT_NEW_TASK,
     SHORTCUT_SEARCH,
 )
+from dialogs import ask_yes_no
 from database import Database
 
 # Модуль здесь напрямую не используется, но импорт нужен: календарь на
@@ -531,14 +531,12 @@ class MainWindow(QMainWindow):
         if task is None:
             return
 
-        answer = QMessageBox.question(
+        is_confirmed = ask_yes_no(
             self,
             CONFIRM_DELETE_TASK_HEADER,
             CONFIRM_DELETE_TASK_TEXT.format(task["title"]),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
         )
-        if answer != QMessageBox.Yes:
+        if not is_confirmed:
             return
 
         self._db.delete_task(task_id)

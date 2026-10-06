@@ -172,6 +172,7 @@ planora/
 ├── main_window.py         # логика главного окна
 ├── task_card.py           # карточка задачи в списке
 ├── task_calendar.py       # календарь с собственной отрисовкой дней
+├── dialogs.py             # окна сообщений с русскими кнопками
 ├── task_dialog.py         # окно создания и редактирования задачи
 ├── categories_dialog.py   # окно управления категориями
 ├── ui/                    # формы из Qt Designer
@@ -231,4 +232,4 @@ color                     description                   text
 | работа с БД | SQLite, три связанные таблицы, чтение / запись / изменение / удаление |
 | обработка клавиатуры | горячие клавиши (см. «Управление») |
 | обработка мыши | клики, двойные клики, контекстное меню |
-| классы и модули | восемь модулей, классы `Database`, `MainWindow`, `TaskCard`, `TaskCalendar`, `TaskDialog`, `CategoriesDialog` |
+| классы и модули | девять модулей, классы `Database`, `MainWindow`, `TaskCard`, `TaskCalendar`, `TaskDialog`, `CategoriesDialog` |
