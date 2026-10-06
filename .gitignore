@@ -10,10 +10,6 @@ __pycache__/
 # База данных — создаётся автоматически при первом запуске приложения
 planora.db
 
-# Артефакты сборки PyInstaller
-build/
-dist/
-
 # IDE
 .vscode/
 .idea/
